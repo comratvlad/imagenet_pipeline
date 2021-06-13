@@ -1,1 +1,1 @@
-# imagenet_pipeline
+# Imagenet pipeline
