@@ -19,19 +19,25 @@ class DatasetFeature(metaclass=abc.ABCMeta):
         pass
 
 
-class RGBFrame(DatasetFeature):
+class RGBImage(DatasetFeature):
     name = 'rgb_image'
 
     def read(self, index):
-        image_path = os.path.join(self.folder_path, self.info.iloc[index]['image_id'])
+        image_path = os.path.join(self.folder_path, self.info.iloc[index]['image_path'])
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
 
 
-class DiseaseLabel(DatasetFeature):
-    name = 'label'
+class Synset(DatasetFeature):
+    name = 'synset'
 
     def read(self, index):
-        label = self.info.iloc[index]['label']
-        return label
+        return self.info.iloc[index]['synset']
+
+
+class IntLabel(DatasetFeature):
+    name = 'int_label'
+
+    def read(self, index):
+        return self.info.iloc[index]['int_label']

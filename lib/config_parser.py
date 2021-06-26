@@ -40,14 +40,13 @@ class ConfigParser(pl.LightningModule):
         self.post_processing = pydoc.locate(config.post_processing)
 
         self.loss = self._get_weighted_sum_loss(config.losses, config.device)
-        self.device = config.device
         self.n_epochs = config.n_epochs
         self.metrics_dict = {name: pydoc.locate(value) for name, value in config.metrics.items()}
 
     def train_dataloader(self) -> DataLoader:
         train_datasets = []
         for _, train_dataset_setting in self.config.train_data.items():
-            transforms = pydoc.locate(transforms)
+            transforms = pydoc.locate(self.config.transforms)
             if self.config.augmentations:
                 transforms = partial(transforms,
                                      albumentations_compose=ConfigParser._make_albumentations_pipeline(self.config.augmentations))
@@ -57,20 +56,21 @@ class ConfigParser(pl.LightningModule):
             train_datasets.append(dataset)
         return DataLoader(ConcatDataset(train_datasets),
                           batch_size=self.config.batch_size,
+                          pin_memory=True,
                           shuffle=True,
                           num_workers=self.config.num_workers)
 
     def val_dataloader(self) -> DataLoader:
         dev_datasets = {}
         for name, dev_dataset_setting in self.config.dev_data.items():
-            transforms = pydoc.locate(transforms)
+            transforms = pydoc.locate(self.config.transforms)
             if self.config.augmentations:
                 transforms = partial(transforms,
                                      albumentations_compose=ConfigParser._make_albumentations_pipeline(self.config.augmentations))
             dev_datasets[name] = FolderDataset(dev_dataset_setting.path, dev_dataset_setting.info_path,
                                                features=[pydoc.locate(feature) for feature in self.config.sampled_features],
                                                transforms=transforms, filter_by=dev_dataset_setting.filter_by)
-        return DataLoader(dev_datasets['imagenet1k'], batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+        return DataLoader(dev_datasets['imagenet1k'], batch_size=self.config.batch_size, num_workers=self.config.num_workers)
 
     def configure_optimizers(self) -> Optimizer:
         return hydra.utils.instantiate(self.config.optimizer, params=self.model.parameters())

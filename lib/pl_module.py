@@ -23,7 +23,7 @@ class BaseClassifier(ConfigParser):
         pass
 
     def training_step(self, batch: dict, _batch_idx: int) -> Tensor:
-        inputs = batch[self.model_input_feature],
+        inputs = batch[self.model_input_feature]
         outputs = self.post_processing(self.forward(inputs))
         weighted_sum, _components = self.loss(batch, outputs)
         self.train_losses = {k: val + self.train_losses[k] for k, val in _components.items()}
@@ -38,7 +38,7 @@ class BaseClassifier(ConfigParser):
         self.train_batches_num = 0
 
     def validation_step(self, batch: dict, _batch_idx: int) -> Dict[str, Tensor]:
-        inputs = batch[self.model_input_feature],
+        inputs = batch[self.model_input_feature]
         outputs = self.post_processing(self.forward(inputs))
         weighted_sum, _components = self.loss(batch, outputs)
         for loss_name in _components:

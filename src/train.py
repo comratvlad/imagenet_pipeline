@@ -10,7 +10,7 @@ from lib.pl_module import BaseClassifier
 def main(config: DictConfig) -> None:
     module = BaseClassifier(config)
     trainer = Trainer(gpus=1 if torch.cuda.is_available() else 0,
-                      max_epochs=10)
+                      max_epochs=module.n_epochs)
     trainer.fit(module)
 
 
