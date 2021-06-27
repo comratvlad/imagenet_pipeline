@@ -9,7 +9,7 @@ sampled_features:
 model:
   _target_: timm.models.create_model
   model_name: resnet18
-  pretrained: True
+  pretrained: False
   checkpoint_path: ''
   num_classes: 1000
 
@@ -30,6 +30,8 @@ train_data:
 n_epochs: ???
 batch_size: 32
 num_workers: 12
+
+epoch_length: 1000
 
 transforms: lib.data.transforms.channel_last
 post_processing: lib.post_processing.logit_processing

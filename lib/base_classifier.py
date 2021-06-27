@@ -8,9 +8,9 @@ from torch import Tensor
 from lib.config_parser import ConfigParser
 
 
-class BaseClassifier(ConfigParser):
+class BaseClassifierPipeline(ConfigParser):
     def __init__(self, config: DictConfig):
-        super(BaseClassifier, self).__init__(config)
+        super(BaseClassifierPipeline, self).__init__(config)
         self.train_losses = defaultdict(float)
         self.train_batches_num = 0
         self.val_metrics = defaultdict(lambda: defaultdict(float))

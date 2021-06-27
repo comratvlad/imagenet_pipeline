@@ -7,7 +7,7 @@ import cv2
 class DatasetFeature(metaclass=abc.ABCMeta):
     def __init__(self, folder_path, info):
         self.folder_path = folder_path
-        self.info = info  # image_id, label
+        self.info = info  # rgb_image, synset, label, int_label
 
     @abc.abstractmethod
     def read(self, index):
@@ -34,6 +34,13 @@ class Synset(DatasetFeature):
 
     def read(self, index):
         return self.info.iloc[index]['synset']
+
+
+class Label(DatasetFeature):
+    name = 'label'
+
+    def read(self, index):
+        return self.info.iloc[index]['label']
 
 
 class IntLabel(DatasetFeature):

@@ -1,33 +1,21 @@
 import pydoc
 from functools import partial
-from typing import Union, Dict, Callable
 
 import albumentations as A
 import hydra
+import numpy as np
 import omegaconf
 import pytorch_lightning as pl
-import timm.scheduler.scheduler
-import torch
 from omegaconf import DictConfig
+from torch import Tensor
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import DataLoader, ConcatDataset, WeightedRandomSampler
 
 from lib.data.dataset import FolderDataset
 from lib.losses.weighted_sum_loss import WeightedSumLoss, LossSettings
 
 
 class ConfigParser(pl.LightningModule):
-    model: torch.nn.Module
-    model_input_feature: str
-    post_processing: Callable
-
-    train_dataset: torch.utils.data.Dataset
-    dev_datasets: Dict[str, torch.utils.data.Dataset]
-
-    scheduler: Union[torch.optim.lr_scheduler._LRScheduler, timm.scheduler.scheduler.Scheduler, None]
-    loss: WeightedSumLoss
-    checkpoints: str
-
     def __init__(self, config: DictConfig):
         super(ConfigParser, self).__init__()
         self.config = config
@@ -40,11 +28,11 @@ class ConfigParser(pl.LightningModule):
         self.post_processing = pydoc.locate(config.post_processing)
 
         self.loss = self._get_weighted_sum_loss(config.losses, config.device)
-        self.n_epochs = config.n_epochs
+
         self.metrics_dict = {name: pydoc.locate(value) for name, value in config.metrics.items()}
 
     def train_dataloader(self) -> DataLoader:
-        train_datasets = []
+        train_datasets, dataset_weights = [], []
         for _, train_dataset_setting in self.config.train_data.items():
             transforms = pydoc.locate(self.config.transforms)
             if self.config.augmentations:
@@ -54,11 +42,17 @@ class ConfigParser(pl.LightningModule):
                                     features=[pydoc.locate(feature) for feature in self.config.sampled_features],
                                     transforms=transforms, filter_by=train_dataset_setting.filter_by)
             train_datasets.append(dataset)
+            dataset_weights.append(train_dataset_setting.weight if 'weight' in train_dataset_setting else 1.)
+
+        samples_weights = np.concatenate([[weight / sum(map(len, train_datasets))] * len(d)
+                                         for weight, d in zip(dataset_weights, train_datasets)])
+        num_samples = self.config.epoch_length * self.config.batch_size if self.config.epoch_length else len(samples_weights)
+
         return DataLoader(ConcatDataset(train_datasets),
                           batch_size=self.config.batch_size,
-                          pin_memory=True,
-                          shuffle=True,
-                          num_workers=self.config.num_workers)
+                          sampler=WeightedRandomSampler(Tensor(samples_weights), num_samples=num_samples),
+                          # shuffle=True,
+                          num_workers=self.config.num_workers, pin_memory=True)
 
     def val_dataloader(self) -> DataLoader:
         dev_datasets = {}
