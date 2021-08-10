@@ -2,10 +2,16 @@ import abc
 import os
 
 import cv2
+import pandas as pd
 
 
 class DatasetFeature(metaclass=abc.ABCMeta):
-    def __init__(self, folder_path, info):
+    def __init__(self, folder_path: str, info: pd.DataFrame):
+        """
+        An abstract class that implements the "Feature" interface
+        :param folder_path: path to the folder, contains features - images, crops etc
+        :param info: pandas.DataFrame with samples info
+        """
         self.folder_path = folder_path
         self.info = info  # rgb_image, synset, label, int_label
 
