@@ -48,10 +48,9 @@ class ConfigParser(pl.LightningModule):
                                          for weight, d in zip(dataset_weights, train_datasets)])
         num_samples = self.config.epoch_length * self.config.batch_size if self.config.epoch_length else len(samples_weights)
 
-        return DataLoader(ConcatDataset(train_datasets),
+        return DataLoader(ConcatDataset(train_datasets) if len(train_datasets) > 1 else train_datasets[0],
                           batch_size=self.config.batch_size,
                           sampler=WeightedRandomSampler(Tensor(samples_weights), num_samples=num_samples),
-                          # shuffle=True,
                           num_workers=self.config.num_workers, pin_memory=True)
 
     def val_dataloader(self) -> DataLoader:

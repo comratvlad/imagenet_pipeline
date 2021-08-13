@@ -8,7 +8,7 @@ sampled_features:
 # Model ===============================================================================
 model:
   _target_: timm.models.create_model
-  model_name: resnet18
+  model_name: resnet50
   pretrained: False
   checkpoint_path: ''
   num_classes: 1000
