@@ -23,7 +23,7 @@ if __name__ == '__main__':
                 name = object.find('name').text
         except FileNotFoundError:
             continue
-        info['image_path'].append(os.path.join(data_path, 'Data', 'CLS-LOC', 'val', image_name))
+        info['image_path'].append(os.path.join('Data', 'CLS-LOC', 'val', image_name))
         info['synset'].append(name)
         info['label'].append(synset_mapping[name][1])
         info['int_label'].append(synset_mapping[name][0])
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     for folder_name in os.listdir(os.path.join(data_path, 'Data', 'CLS-LOC', 'train')):
         for image_name in os.listdir(os.path.join(data_path, 'Data', 'CLS-LOC', 'train', folder_name)):
-            info['image_path'].append(os.path.join(data_path, 'Data', 'CLS-LOC', 'train', folder_name, image_name))
+            info['image_path'].append(os.path.join('Data', 'CLS-LOC', 'train', folder_name, image_name))
             info['synset'].append(folder_name)
             info['label'].append(synset_mapping[folder_name][1])
             info['int_label'].append(synset_mapping[folder_name][0])

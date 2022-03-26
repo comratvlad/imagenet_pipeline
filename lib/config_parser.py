@@ -1,5 +1,6 @@
 import pydoc
 from functools import partial
+from typing import Mapping
 
 import albumentations as A
 import hydra
@@ -7,6 +8,7 @@ import numpy as np
 import omegaconf
 import pytorch_lightning as pl
 from omegaconf import DictConfig
+from pytorch_lightning.trainer.supporters import CombinedLoader
 from torch import Tensor
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, ConcatDataset, WeightedRandomSampler
@@ -53,17 +55,20 @@ class ConfigParser(pl.LightningModule):
                           sampler=WeightedRandomSampler(Tensor(samples_weights), num_samples=num_samples),
                           num_workers=self.config.num_workers, pin_memory=True)
 
-    def val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> Mapping[str, DataLoader]:
         dev_datasets = {}
         for name, dev_dataset_setting in self.config.dev_data.items():
             transforms = pydoc.locate(self.config.transforms)
             if self.config.augmentations:
                 transforms = partial(transforms,
                                      albumentations_compose=ConfigParser._make_albumentations_pipeline(self.config.augmentations))
-            dev_datasets[name] = FolderDataset(dev_dataset_setting.path, dev_dataset_setting.info_path,
+            dataset = FolderDataset(dev_dataset_setting.path, dev_dataset_setting.info_path,
                                                features=[pydoc.locate(feature) for feature in self.config.sampled_features],
                                                transforms=transforms, filter_by=dev_dataset_setting.filter_by)
-        return DataLoader(dev_datasets['imagenet1k'], batch_size=self.config.batch_size, num_workers=self.config.num_workers)
+            dev_datasets[name] = DataLoader(dataset,
+                                            batch_size=self.config.batch_size,
+                                            num_workers=self.config.num_workers)
+        return CombinedLoader(dev_datasets)
 
     def configure_optimizers(self) -> Optimizer:
         return hydra.utils.instantiate(self.config.optimizer, params=self.model.parameters())

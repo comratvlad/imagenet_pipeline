@@ -5,7 +5,6 @@ This repository contains a complete pipeline for training deep learning models. 
 here are:
 * Pytorch Ligtning
 * Hydra
-* ClearML
 
 You can fork this repository to customize it for your task, for example, for a kaggle competition.
 

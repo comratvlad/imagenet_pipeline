@@ -38,12 +38,13 @@ class BaseClassifierPipeline(ConfigParser):
         self.train_batches_num = 0
 
     def validation_step(self, batch: dict, _batch_idx: int) -> Dict[str, Tensor]:
-        inputs = batch[self.model_input_feature]
-        outputs = self.post_processing(self.forward(inputs))
-        weighted_sum, _components = self.loss(batch, outputs)
-        for loss_name in _components:
-            self.val_losses['imagenet1k'][loss_name] += _components[loss_name]
-        return {'val_loss': weighted_sum}
+        for name, _batch in batch.items():
+            inputs = _batch[self.model_input_feature]
+            outputs = self.post_processing(self.forward(inputs))
+            weighted_sum, _components = self.loss(_batch, outputs)
+            for loss_name in _components:
+                self.val_losses[name][loss_name] += _components[loss_name]
+            return {'val_loss': weighted_sum}
 
     def validation_epoch_end(self, validationStepOutputs: List[Dict[str, Tensor]]):
         avgLoss = torch.stack([x['val_loss'] for x in validationStepOutputs]).mean()

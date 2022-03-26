@@ -13,7 +13,7 @@ class DatasetFeature(metaclass=abc.ABCMeta):
         :param info: pandas.DataFrame with samples info
         """
         self.folder_path = folder_path
-        self.info = info  # rgb_image, synset, label, int_label
+        self.info = info  # rgb_image, synset, label, int_label - for ImageNet-1k
 
     @abc.abstractmethod
     def read(self, index):
