@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Dict, List
 
 import torch
+import torchmetrics
 from omegaconf import DictConfig
 from torch import Tensor
 
@@ -15,6 +16,7 @@ class BaseClassifierPipeline(ConfigParser):
         self.train_batches_num = 0
         self.val_metrics = defaultdict(lambda: defaultdict(float))
         self.val_losses = defaultdict(lambda: defaultdict(float))
+        self.accuracy = torchmetrics.Accuracy()
 
     def forward(self, x: Tensor):
         return self.model(x)
@@ -42,8 +44,11 @@ class BaseClassifierPipeline(ConfigParser):
             inputs = _batch[self.model_input_feature]
             outputs = self.post_processing(self.forward(inputs))
             weighted_sum, _components = self.loss(_batch, outputs)
+            self.accuracy(outputs['logits'], _batch['int_label'])
             for loss_name in _components:
                 self.val_losses[name][loss_name] += _components[loss_name]
+                self.log("val_loss_{}_{}".format(name, loss_name), _components[loss_name], prog_bar=True)
+            self.log("val_acc", self.accuracy, prog_bar=True)
             return {'val_loss': weighted_sum}
 
     def validation_epoch_end(self, validationStepOutputs: List[Dict[str, Tensor]]):
